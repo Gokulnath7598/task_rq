@@ -1,4 +1,4 @@
-package com.rootquotient.task.task_rq
+package com.rootquotient.task
 
 import io.flutter.embedding.android.FlutterActivity
 
