@@ -16,6 +16,7 @@ class TasksDBHelper {
         db.execute('''
           CREATE TABLE $_tableName (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            orderIndex INTEGER NOT NULL,
             title TEXT NOT NULL,
             isCompleted INTEGER NOT NULL DEFAULT 0,
             date TEXT NOT NULL
@@ -33,7 +34,7 @@ class TasksDBHelper {
 
   static Future<List<Task>> getTasks() async {
     final db = await getDatabase();
-    final List<Map<String, dynamic>> maps = await db.query(_tableName);
+    final List<Map<String, dynamic>> maps = await db.query(_tableName, orderBy: 'orderIndex');
     return List.generate(maps.length, (i) => Task.fromMap(maps[i]));
   }
 
@@ -45,6 +46,29 @@ class TasksDBHelper {
       where: 'id = ?',
       whereArgs: [task.id],
     );
+  }
+
+  static Future<void> reOrder(int oldIndex, int newIndex, List<Task> tasks) async {
+    final db = await getDatabase();
+
+    if (oldIndex == newIndex) {
+      return;
+    }
+
+    if (newIndex > oldIndex) {
+      newIndex -= 1;
+    }
+    final Task item = tasks.removeAt(oldIndex);
+    tasks.insert(newIndex, item);
+
+    for (int i = 0; i < tasks.length; i++) {
+      await db.update(
+        _tableName,
+        {'orderIndex': i},
+        where: 'id = ?',
+        whereArgs: [tasks[i].id],
+      );
+    }
   }
 
   static Future<void> deleteTask(Task task) async {
